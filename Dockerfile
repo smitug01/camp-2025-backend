@@ -1,4 +1,4 @@
-FROM python:3.13-alpine AS builder
+FROM python:3.13-alpine AS production
 
 WORKDIR /code
 
@@ -9,20 +9,11 @@ RUN apk add --no-cache \
   musl-dev \
   linux-headers
 
-COPY requirements.txt /code/
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-
-RUN uv pip install --system --no-cache-dir -r requirements.txt
-
-FROM python:3.13-alpine AS production
-
-WORKDIR /code
-
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
 COPY . /code/
+
+RUN uv sync
 
 EXPOSE 8080
 
-CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uv", "run", "fastapi", "run", "--host", "0.0.0.0", "--port", "8080"]
